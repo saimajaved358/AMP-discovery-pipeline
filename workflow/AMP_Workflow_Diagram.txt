@@ -1,0 +1,104 @@
+
+================================================================================
+                    AMP ANALYSIS WORKFLOW DIAGRAM
+================================================================================
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │                    INPUT: YOUR GENOME                       │
+    │         ┌─────────────┐        ┌─────────────┐              │
+    │         │  .fna file  │        │  .faa file  │              │
+    │         │ (contigs)   │        │ (proteins)  │              │
+    │         └──────┬──────┘        └──────┬──────┘              │
+    └────────────────┼─────────────────────┼─────────────────────┘
+                     │                     │
+                     ▼                     ▼
+    ┌────────────────────────┐    ┌────────────────────────┐
+    │      STEP 2: Macrel    │    │     STEP 1: amPEPpy    │
+    │   (Genome-wide sORF    │    │  (ML on annotated      │
+    │     prediction)        │    │   proteins)            │
+    │                        │    │                        │
+    │  Input: .fna           │    │  Input: .faa           │
+    │  Output: smorfs.faa    │    │  Output: predictions   │
+    │          predictions   │    │          with scores   │
+    └──────────┬─────────────┘    └──────────┬─────────────┘
+               │                             │
+               │         ┌───────────────────┘
+               │         │
+               ▼         ▼
+    ┌────────────────────────────────────────┐
+    │         STEP 3: AMPSphere Exact        │
+    │         (Database Validation)            │
+    │                                        │
+    │  ┌──────────────────────────────────┐  │
+    │  │  Query: smorfs.faa vs AMPSphere  │  │
+    │  │  Mode: exact match (100% ID)     │  │
+    │  │  Result: KNOWN AMPs confirmed     │  │
+    │  └──────────────────────────────────┘  │
+    └──────────────────┬─────────────────────┘
+                       │
+                       ▼
+    ┌────────────────────────────────────────┐
+    │         STEP 4: AMPSphere HMMER        │
+    │         (Homology Search)                │
+    │                                        │
+    │  ┌──────────────────────────────────┐  │
+    │  │  Query: smorfs.faa vs AMPSphere  │  │
+    │  │  Mode: HMMER (distant similarity)│  │
+    │  │  Filter: E-value ≤ 1e-5          │  │
+    │  │          Score ≥ 10               │  │
+    │  │  Result: NOVEL AMP candidates     │  │
+    │  └──────────────────────────────────┘  │
+    └──────────────────┬─────────────────────┘
+                       │
+                       ▼
+    ┌────────────────────────────────────────┐
+    │      STEP 5: Remove Redundancy         │
+    │      (Keep best hit per query)          │
+    │                                        │
+    │  Before: Multiple hits per AMP          │
+    │  After:  One best hit per AMP          │
+    └──────────────────┬─────────────────────┘
+                       │
+                       ▼
+    ┌────────────────────────────────────────┐
+    │    STEP 6: Physicochemical Analysis      │
+    │    (Validate AMP-like properties)        │
+    │                                        │
+    │  • Length: 10-100 aa                   │
+    │  • Charge: +2 to +9 (cationic)         │
+    │  • Hydrophobicity: 0.3-0.6             │
+    │  • % Cationic residues: 10-30%          │
+    └──────────────────┬─────────────────────┘
+                       │
+                       ▼
+    ┌────────────────────────────────────────┐
+    │         FINAL OUTPUTS FOR PAPER          │
+    │                                        │
+    │  📄 AMP_candidates_summary.tsv           │
+    │  🧬 amp_candidates.faa (sequences)       │
+    │  📊 amp_properties.tsv (properties)      │
+    │  📈 Figures (length, charge, etc.)       │
+    │  📝 README.txt (methods documentation)   │
+    └────────────────────────────────────────┘
+
+================================================================================
+                         EVIDENCE TIERS
+================================================================================
+
+    ★★★★★  TIER 1: AMPSphere Exact Match
+            "100% identical to known AMP"
+            → STRONGEST evidence for publication
+
+    ★★★★☆  TIER 2: HMMER E-value ≤ 1e-5 + Score ≥ 10
+            "Conserved AMP domains detected"
+            → STRONG evidence, likely functional
+
+    ★★★☆☆  TIER 3: amPEPpy + Macrel both predict AMP
+            "Two ML methods agree"
+            → MODERATE evidence, needs validation
+
+    ★★☆☆☆  TIER 4: Single tool prediction
+            "Hypothesis only"
+            → WEAK evidence, needs experiments
+
+================================================================================
